@@ -1,5 +1,5 @@
 # Ignore shadcn/ui components (generated code)
-components/ui/
+src/components/ui/
 
 # Other common ignores
 node_modules/

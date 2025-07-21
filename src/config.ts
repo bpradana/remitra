@@ -20,25 +20,34 @@ const uiConfig: AlchemyAccountsUIConfig = {
   illustrationStyle: "outline",
   auth: {
     sections: [
-      [{ type: "email" }],
       [
-        { type: "passkey" },
-        { type: "social", authProviderId: "google", mode: "popup" },
-        { type: "social", authProviderId: "facebook", mode: "popup" },
+        {
+          type: "email"
+        }
+      ],
+      [
+        {
+          type: "passkey"
+        },
+        {
+          type: "social", authProviderId: "google", mode: "popup"
+        },
+        {
+          type: "social", authProviderId: "facebook", mode: "popup"
+        },
       ],
     ],
-    addPasskeyOnSignup: false,
+    addPasskeyOnSignup: true,
   },
 };
 
 export const config = createConfig(
   {
     transport: alchemy({ apiKey: API_KEY }),
-    // Note: This quickstart is configured for Arbitrum Sepolia.
     chain: arbitrumSepolia,
-    ssr: true, // more about ssr: https://www.alchemy.com/docs/wallets/react/ssr
-    storage: cookieStorage, // more about persisting state with cookies: https://www.alchemy.com/docs/wallets/react/ssr#persisting-the-account-state
-    enablePopupOauth: true, // must be set to "true" if you plan on using popup rather than redirect in the social login flow
+    ssr: true,
+    storage: cookieStorage,
+    enablePopupOauth: true,
     policyId: SPONSORSHIP_POLICY_ID,
   },
   uiConfig

@@ -11,13 +11,7 @@ export default function Header() {
     <header className="border-b">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Image
-            src="/smart-wallets.svg"
-            alt="Smart Wallets"
-            width={200}
-            height={26}
-            className="h-6 w-auto"
-          />
+          <h1 className="text-2xl font-bold">Remitra</h1>
         </div>
 
         {isConnected && (

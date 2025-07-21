@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLink, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,27 +15,107 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatAddress } from "@/lib/utils";
+import { formatAddress, greetUser } from "@/lib/utils";
 import { useUser, useSmartAccountClient } from "@account-kit/react";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function UserInfo() {
-  const [isCopied, setIsCopied] = useState(false);
+  const [isAddressCopied, setIsAddressCopied] = useState(false);
+  const [isUsernameCopied, setIsUsernameCopied] = useState(false);
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
   const user = useUser();
   const userEmail = user?.email ?? "anon";
   const { client } = useSmartAccountClient({});
 
-  const handleCopy = () => {
+  // Fetch user info from API
+  const fetchUserInfo = async () => {
+    if (!user?.userId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/users/${user.userId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserInfo(data);
+      } else {
+        setUserInfo(null);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserInfo();
+    // Save user if not in DB (as before)
+    if (user?.userId && user?.email && client?.account?.address) {
+      fetch(`/api/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.userId,
+          email: user.email,
+          address: client.account.address,
+        }),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.userId, user?.email, client?.account?.address]);
+
+  // Refetch user info after username update
+  const handleUsernameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim()) {
+      setUsernameError("Username cannot be empty");
+      return;
+    }
+    setIsSubmitting(true);
+    setUsernameError("");
+    try {
+      const res = await fetch(`/api/users/${user?.userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.userId,
+          userName: username.trim(),
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to save username");
+      }
+      setUsername("");
+      await fetchUserInfo();
+    } catch (err) {
+      setUsernameError("Failed to save username");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddressCopy = () => {
     navigator.clipboard.writeText(client?.account?.address ?? "");
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    setIsAddressCopied(true);
+    setTimeout(() => setIsAddressCopied(false), 2000);
+  };
+
+  const handleUsernameCopy = () => {
+    navigator.clipboard.writeText(userInfo?.userName ?? "");
+    setIsUsernameCopied(true);
+    setTimeout(() => setIsUsernameCopied(false), 2000);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>User Profile</CardTitle>
+        <CardTitle>{greetUser(userInfo?.userName ?? "anon")}</CardTitle>
         <CardDescription>
-          Your users are always in control of their non-custodial smart wallet.
+          You can view your email and smart wallet address here.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -45,6 +125,63 @@ export default function UserInfo() {
           </p>
           <p className="font-medium">{userEmail}</p>
         </div>
+        {loading ? <Spinner /> : userInfo && !userInfo.userName ? (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-red-500">
+                You don't have a username yet. Please create one to continue.
+              </p>
+            </div>
+            <form onSubmit={handleUsernameSubmit} className="flex gap-2 items-center">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  className="border rounded px-2 py-1 text-sm"
+                  placeholder="Enter username"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  disabled={isSubmitting}
+                />
+                <Button type="submit" size="sm" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </form>
+            {usernameError && (
+              <div className="text-red-600 text-xs mt-1">{usernameError}</div>
+            )}
+          </div>
+        ) : userInfo && userInfo.userName ? (
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                Username
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="font-mono text-xs py-1 px-2">
+                {userInfo.userName}
+              </Badge>
+              <TooltipProvider>
+                <Tooltip open={isUsernameCopied}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={handleUsernameCopy}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copied!</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        ) : null}
         <div>
           <div className="flex items-center gap-2 mb-1">
             <p className="text-sm font-medium text-muted-foreground">
@@ -56,13 +193,13 @@ export default function UserInfo() {
               {formatAddress(client?.account?.address ?? "")}
             </Badge>
             <TooltipProvider>
-              <Tooltip open={isCopied}>
+              <Tooltip open={isAddressCopied}>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={handleCopy}
+                    onClick={handleAddressCopy}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>

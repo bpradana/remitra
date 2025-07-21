@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -128,15 +129,18 @@ export default function UserInfo() {
         {loading ? <Spinner /> : userInfo && !userInfo.userName ? (
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-1">
-              <p className="text-sm font-medium text-red-500">
-                You don't have a username yet. Please create one to continue.
+              <p className="text-sm font-medium text-muted-foreground">
+                Username
+              </p>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-yellow-500 bg-yellow-100 px-2 py-1 rounded-md">
+                Please create a username to continue.
               </p>
             </div>
             <form onSubmit={handleUsernameSubmit} className="flex gap-2 items-center">
               <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  className="border rounded px-2 py-1 text-sm"
+                <Input
                   placeholder="Enter username"
                   value={username}
                   onChange={e => setUsername(e.target.value)}

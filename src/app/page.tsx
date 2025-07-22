@@ -7,6 +7,8 @@ import LoginCard from "./components/login-card";
 import Header from "./components/header";
 import LearnMore from "./components/learn-more";
 import TransferCard from "./components/transfer-card";
+import WithdrawCard from "./components/withdraw-card";
+import DepositCard from "./components/deposit-card";
 
 export default function Home() {
   const signerStatus = useSignerStatus();
@@ -14,8 +16,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <Header />
-      <div className="bg-bg-main bg-cover bg-center bg-no-repeat h-[calc(100vh-4rem)]">
-        <main className="container mx-auto px-4 py-8 h-full">
+      <div className="bg-bg-main bg-cover bg-center bg-no-repeat min-h-screen">
+        <main className="container mx-auto px-4 py-8 min-h-screen">
           {signerStatus.isConnected ? (
             <div className="grid gap-8 md:grid-cols-[1fr_1fr_1fr]">
               <div className="flex flex-col gap-8">
@@ -25,6 +27,10 @@ export default function Home() {
               <div className="flex flex-col gap-8">
                 <NftMintCard />
                 <TransferCard />
+              </div>
+              <div className="flex flex-col gap-8">
+                <WithdrawCard />
+                <DepositCard />
               </div>
             </div>
           ) : (

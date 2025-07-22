@@ -14,6 +14,10 @@
     "@account-kit/core": "4.35.1",
     "@account-kit/infra": "4.35.1",
     "@account-kit/react": "4.35.1",
+    "@hookform/resolvers": "^5.1.1",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tanstack/react-query": "^5.50.1",
@@ -25,11 +29,13 @@
     "next": "14.2.4",
     "react": "^18",
     "react-dom": "^18",
+    "react-hook-form": "^7.60.0",
     "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
     "viem": "2.30.0",
-    "wagmi": "2.15.4"
+    "wagmi": "2.15.4",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

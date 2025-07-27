@@ -25,12 +25,12 @@ export async function GET(request: NextRequest) {
 
         // Prepare request to IDRX API
         const method = 'GET';
-        const url = '/api/transaction/method';
+        const path = '/api/transaction/method';
         const body = {};
         const timestamp = Math.floor(Date.now() / 1000).toString();
 
         // Generate signature
-        const signature = createSignature(method, url, body, timestamp, user.apiSecret);
+        const signature = createSignature(method, path, body, timestamp, user.apiSecret);
 
         // Make request to IDRX API
         const baseUrl = process.env.IDRX_API_BASE_URL;
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'IDRX API base URL is not set' }, { status: 500 });
         }
         const response = await fetch(`${baseUrl}/api/transaction/method`, {
-            method: 'GET',
+            method: method,
             headers: {
                 'idrx-api-key': user.apiKey,
                 'idrx-api-sig': signature,

@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useLogout, useSignerStatus } from "@account-kit/react";
-import Image from "next/image";
 
 export default function Header() {
   const { logout } = useLogout();

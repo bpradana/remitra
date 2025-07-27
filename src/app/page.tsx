@@ -1,7 +1,7 @@
 "use client";
 
 import { useSignerStatus } from "@account-kit/react";
-import UserInfoCard from "./components/user-info-card";
+import UserInfoCard from "./components/user-info/user-info-card";
 import NftMintCard from "./components/nft-mint-card";
 import LoginCard from "./components/login-card";
 import Header from "./components/header";

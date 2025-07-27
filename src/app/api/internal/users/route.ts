@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
         if (existing) {
             return NextResponse.json({ success: true, message: 'User already exists' });
         }
-        db.insert(users).values({ userId, email, address }).run();
+        db.insert(users).values({ userId, email, walletAddress: address }).run();
         return NextResponse.json({ success: true });
     } catch (err) {
         return NextResponse.json({ error: `Failed to save user info: ${err}` }, { status: 500 });

@@ -47,9 +47,10 @@ export default function BankAccountsDialog({
     const [newBankAccount, setNewBankAccount] = useState({ bankName: "", bankCode: "", accountNumber: "" });
     const [isAddingBank, setIsAddingBank] = useState(false);
     const [bankError, setBankError] = useState("");
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    // Fetch banks from IDRX API
-    const { banks, isLoading: banksLoading, error: banksError } = useBanks();
+    // Fetch banks from IDRX API when dialog opens
+    const { banks, isLoading: banksLoading, error: banksError } = useBanks(isDialogOpen);
 
     // Handle adding new bank account
     const handleAddBankAccount = async (e: React.FormEvent) => {
@@ -101,7 +102,7 @@ export default function BankAccountsDialog({
     };
 
     return (
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline">
                     <CreditCard className="h-4 w-4" /> Bank Accounts

@@ -14,7 +14,7 @@ interface BanksResponse {
     error?: string;
 }
 
-export function useBanks() {
+export function useBanks(enabled: boolean = false) {
     const user = useUser();
 
     const {
@@ -41,7 +41,7 @@ export function useBanks() {
 
             return res.json();
         },
-        enabled: !!user?.userId,
+        enabled: enabled && !!user?.userId,
     });
 
     return {

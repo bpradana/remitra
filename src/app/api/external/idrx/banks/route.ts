@@ -33,7 +33,11 @@ export async function GET(request: NextRequest) {
         const signature = createSignature(method, url, body, timestamp, user.apiSecret);
 
         // Make request to IDRX API
-        const response = await fetch('https://idrx.co/api/transaction/method', {
+        const baseUrl = process.env.IDRX_API_BASE_URL;
+        if (!baseUrl) {
+            return NextResponse.json({ error: 'IDRX API base URL is not set' }, { status: 500 });
+        }
+        const response = await fetch(`${baseUrl}/api/transaction/method`, {
             method: 'GET',
             headers: {
                 'idrx-api-key': user.apiKey,

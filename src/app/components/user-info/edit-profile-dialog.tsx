@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { useUserData } from "@/app/hooks/useUserData";
 import { Dropzone, DropzoneContent } from "@/components/ui/dropzone";
+import ConfirmationDialog from "./confirmation-dialog";
 
 interface EditProfileDialogProps {
     userEmail: string;
@@ -46,7 +47,10 @@ export default function EditProfileDialog({
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [uploadedFile, setUploadedFile] = useState<string | null>(identityFile || null);
+    const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+    const [tempFile, setTempFile] = useState<string | null>(null);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
 
     const { updateProfile } = useUserData();
 
@@ -75,9 +79,25 @@ export default function EditProfileDialog({
             identityNumber: identityNumber || "",
         });
         setUploadedFile(identityFile || null);
+        setTempFile(null);
     }, [userEmail, fullName, physicalAddress, userName, identityNumber, identityFile, reset]);
 
     const onSubmit = async (data: FormData) => {
+        // Check if this is the first time setting the required fields
+        const isFirstTimeSetting = !fullName && !physicalAddress && !identityNumber && !identityFile;
+        const hasRequiredFields = data.fullName && data.physicalAddress && data.identityNumber && (uploadedFile || tempFile);
+
+        if (isFirstTimeSetting && hasRequiredFields) {
+            // Show confirmation dialog before submitting
+            setPendingFormData(data);
+            setShowConfirmation(true);
+            return;
+        }
+
+        await submitFormData(data);
+    };
+
+    const submitFormData = async (data: FormData) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -87,9 +107,11 @@ export default function EditProfileDialog({
                 physicalAddress: data.physicalAddress || undefined,
                 userName: data.userName || undefined,
                 identityNumber: data.identityNumber || undefined,
-                identityFile: uploadedFile || undefined,
+                identityFile: uploadedFile || tempFile || undefined,
             });
             setIsSuccess(true);
+            // Clear temp file after successful submission
+            setTempFile(null);
             setTimeout(() => {
                 setIsOpen(false);
                 setIsSuccess(false);
@@ -102,6 +124,19 @@ export default function EditProfileDialog({
         }
     };
 
+    const handleConfirmationConfirm = async () => {
+        if (pendingFormData) {
+            await submitFormData(pendingFormData);
+            setShowConfirmation(false);
+            setPendingFormData(null);
+        }
+    };
+
+    const handleConfirmationCancel = () => {
+        setShowConfirmation(false);
+        setPendingFormData(null);
+    };
+
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
         if (!open) {
@@ -109,6 +144,7 @@ export default function EditProfileDialog({
             setIsSuccess(false);
             reset();
             setUploadedFile(identityFile || null);
+            setTempFile(null);
         }
     };
 
@@ -117,7 +153,8 @@ export default function EditProfileDialog({
             const file = acceptedFiles[0];
             try {
                 const base64 = await fileToBase64(file);
-                setUploadedFile(base64);
+                // Store file temporarily until form is submitted
+                setTempFile(base64);
             } catch (err) {
                 setError("Failed to process file");
                 console.error("File processing error:", err);
@@ -145,137 +182,198 @@ export default function EditProfileDialog({
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-                <Button variant="outline">
-                    <Settings className="h-4 w-4" /> Edit Account
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Edit profile</DialogTitle>
-                    <DialogDescription>
-                        Make changes to your profile here. Click save when
-                        you&apos;re done.
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid gap-3">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            {...register("email", {
-                                required: "Email is required",
-                                pattern: {
-                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                    message: "Invalid email address"
-                                }
-                            })}
-                        />
-                        {errors.email && (
-                            <span className="text-sm text-red-500">{errors.email.message}</span>
-                        )}
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="fullName">Full Name</Label>
-                        <Input
-                            id="fullName"
-                            placeholder="Enter your full name"
-                            {...register("fullName")}
-                        />
-                        {errors.fullName && (
-                            <span className="text-sm text-red-500">{errors.fullName.message}</span>
-                        )}
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="physicalAddress">Physical Address</Label>
-                        <Input
-                            id="physicalAddress"
-                            placeholder="Enter your physical address"
-                            {...register("physicalAddress")}
-                        />
-                        {errors.physicalAddress && (
-                            <span className="text-sm text-red-500">{errors.physicalAddress.message}</span>
-                        )}
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="userName">Username</Label>
-                        <Input
-                            id="userName"
-                            placeholder="Enter your username"
-                            {...register("userName")}
-                        />
-                        {errors.userName && (
-                            <span className="text-sm text-red-500">{errors.userName.message}</span>
-                        )}
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="identityNumber">Identity Number</Label>
-                        <Input
-                            id="identityNumber"
-                            placeholder="16 digits"
-                            {...register("identityNumber", {
-                                pattern: {
-                                    value: /^\d{16}$/,
-                                    message: "Identity number must be exactly 16 digits"
-                                }
-                            })}
-                        />
-                        {errors.identityNumber && (
-                            <span className="text-sm text-red-500">{errors.identityNumber.message}</span>
-                        )}
-                    </div>
-                    <div className="grid w-full max-w-sm items-center gap-3">
-                        <Label htmlFor="ktp">Identity File</Label>
-                        <Dropzone
-                            onDrop={handleDrop}
-                            onError={handleError}
-                            disabled={isLoading}
-                            maxFiles={1}
-                            maxSize={5 * 1024 * 1024} // 5MB
-                        >
-                            <DropzoneContent>
-                                <p>Drag and drop your identity file here or click to upload</p>
-                                {uploadedFile && (
-                                    <p className="text-sm text-green-600 mt-2">✓ File uploaded successfully</p>
-                                )}
-                            </DropzoneContent>
-                        </Dropzone>
-                    </div>
-
-                    {error && (
-                        <div className="text-sm text-red-500 bg-red-50 p-2 rounded">
-                            {error}
-                        </div>
-                    )}
-
-                    {isSuccess && (
-                        <div className="text-sm text-green-600 bg-green-50 p-2 rounded flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4" />
-                            Profile updated successfully!
-                        </div>
-                    )}
-
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="outline" disabled={isLoading}>
-                                Cancel
-                            </Button>
-                        </DialogClose>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                "Save changes"
+        <>
+            <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <Settings className="h-4 w-4" /> Edit Account
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit profile</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your profile here. Click save when
+                            you&apos;re done.
+                            {(!fullName || !physicalAddress || !identityNumber || !identityFile) && (
+                                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+                                    ⚠️ <strong>Important:</strong> Once you submit your email, full name, physical address, ID number, and ID file for the first time, these fields cannot be changed. Please ensure all information is accurate before submitting.
+                                </div>
                             )}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <div className="grid gap-3">
+                            <Label htmlFor="email">
+                                Email
+                                <span className="text-red-500 ml-1">*</span>
+                                <span className="text-gray-500 ml-1 text-xs">(cannot be changed)</span>
+                            </Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                {...register("email", {
+                                    required: "Email is required",
+                                    pattern: {
+                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                        message: "Invalid email address"
+                                    }
+                                })}
+                                disabled={true}
+                                className="bg-gray-100"
+                            />
+                            {errors.email && (
+                                <span className="text-sm text-red-500">{errors.email.message}</span>
+                            )}
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="fullName">
+                                Full Name
+                                {!fullName && <span className="text-red-500 ml-1">*</span>}
+                                {fullName && <span className="text-gray-500 ml-1 text-xs">(cannot be changed)</span>}
+                            </Label>
+                            <Input
+                                id="fullName"
+                                placeholder="Enter your full name"
+                                {...register("fullName")}
+                                disabled={!!fullName}
+                                className={fullName ? "bg-gray-100" : ""}
+                            />
+                            {errors.fullName && (
+                                <span className="text-sm text-red-500">{errors.fullName.message}</span>
+                            )}
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="physicalAddress">
+                                Physical Address
+                                {!physicalAddress && <span className="text-red-500 ml-1">*</span>}
+                                {physicalAddress && <span className="text-gray-500 ml-1 text-xs">(cannot be changed)</span>}
+                            </Label>
+                            <Input
+                                id="physicalAddress"
+                                placeholder="Enter your physical address"
+                                {...register("physicalAddress")}
+                                disabled={!!physicalAddress}
+                                className={physicalAddress ? "bg-gray-100" : ""}
+                            />
+                            {errors.physicalAddress && (
+                                <span className="text-sm text-red-500">{errors.physicalAddress.message}</span>
+                            )}
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="userName">Username</Label>
+                            <Input
+                                id="userName"
+                                placeholder="Enter your username"
+                                {...register("userName")}
+                            />
+                            {errors.userName && (
+                                <span className="text-sm text-red-500">{errors.userName.message}</span>
+                            )}
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="identityNumber">
+                                Identity Number
+                                {!identityNumber && <span className="text-red-500 ml-1">*</span>}
+                                {identityNumber && <span className="text-gray-500 ml-1 text-xs">(cannot be changed)</span>}
+                            </Label>
+                            <Input
+                                id="identityNumber"
+                                placeholder="16 digits"
+                                {...register("identityNumber", {
+                                    pattern: {
+                                        value: /^\d{16}$/,
+                                        message: "Identity number must be exactly 16 digits"
+                                    }
+                                })}
+                                disabled={!!identityNumber}
+                                className={identityNumber ? "bg-gray-100" : ""}
+                            />
+                            {errors.identityNumber && (
+                                <span className="text-sm text-red-500">{errors.identityNumber.message}</span>
+                            )}
+                        </div>
+                        <div className="grid w-full max-w-sm items-center gap-3">
+                            <Label htmlFor="ktp">
+                                Identity File
+                                {!identityFile && <span className="text-red-500 ml-1">*</span>}
+                                {identityFile && <span className="text-gray-500 ml-1 text-xs">(cannot be changed)</span>}
+                            </Label>
+                            <Dropzone
+                                onDrop={handleDrop}
+                                onError={handleError}
+                                disabled={isLoading || (!!identityFile && !tempFile)}
+                                maxFiles={1}
+                                maxSize={5 * 1024 * 1024} // 5MB
+                            >
+                                <DropzoneContent>
+                                    <p>Drag and drop your identity file here or click to upload</p>
+                                    {(uploadedFile || tempFile) && (
+                                        <div className="text-sm text-green-600 mt-2">
+                                            ✓ File ready for upload
+                                            {tempFile && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setTempFile(null)}
+                                                    className="ml-2 text-red-500 hover:text-red-700 underline"
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    {identityFile && !tempFile && (
+                                        <p className="text-sm text-gray-500 mt-2">File already uploaded (cannot be changed)</p>
+                                    )}
+                                </DropzoneContent>
+                            </Dropzone>
+                        </div>
+
+                        {error && (
+                            <div className="text-sm text-red-500 bg-red-50 p-2 rounded">
+                                {error}
+                            </div>
+                        )}
+
+                        {isSuccess && (
+                            <div className="text-sm text-green-600 bg-green-50 p-2 rounded flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4" />
+                                Profile updated successfully!
+                            </div>
+                        )}
+
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline" disabled={isLoading}>
+                                    Cancel
+                                </Button>
+                            </DialogClose>
+                            <Button type="submit" disabled={isLoading}>
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    (!fullName || !physicalAddress || !identityNumber || !identityFile)
+                                        ? "Submit Information"
+                                        : "Save changes"
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <ConfirmationDialog
+                isOpen={showConfirmation}
+                onClose={handleConfirmationCancel}
+                onConfirm={handleConfirmationConfirm}
+                title="⚠️ Important: Information Cannot Be Changed"
+                description="You are about to submit your personal information (email, full name, physical address, ID number, and ID file) for the first time. Once submitted, these fields cannot be modified or changed. Please ensure all information is accurate and complete before proceeding."
+                confirmText="Submit Information"
+                cancelText="Review Again"
+            />
+        </>
     );
 } 

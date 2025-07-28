@@ -12,6 +12,7 @@ export function formatAddress(address: string) {
 export function greetUser(username: string) {
   const hour = new Date().getHours();
   let greeting: string;
+  let firstName = username.split(" ")[0];
 
   if (hour < 12) {
     greeting = "Good morning";
@@ -21,5 +22,5 @@ export function greetUser(username: string) {
     greeting = "Good evening";
   }
 
-  return `${greeting}, ${username}!`;
+  return `${greeting}, ${firstName}!`;
 }

@@ -30,7 +30,7 @@ export default function UserInfo() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{greetUser(userInfo?.userName ?? "anon")}</CardTitle>
+        <CardTitle>{greetUser(userInfo?.fullName ?? "anon")}</CardTitle>
         <CardDescription>
           You can view your email and smart wallet address here.
         </CardDescription>

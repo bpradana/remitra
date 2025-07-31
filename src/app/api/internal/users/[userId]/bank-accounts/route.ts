@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { bankAccounts, banks, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
+import { GetBankAccountsResponse, CreateBankAccountResponse, CreateBankAccountRequestData } from '@/app/presentation/internal/bank-accounts';
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
     const { userId } = params;
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
             .where(eq(bankAccounts.userId, user.id))
             .all();
 
-        return NextResponse.json(userBankAccounts);
+        return NextResponse.json(userBankAccounts as GetBankAccountsResponse);
     } catch (err) {
         return NextResponse.json({ error: `Failed to fetch bank accounts: ${err}` }, { status: 500 });
     }
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: { userId: str
         return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
-    const { bankCode, bankName, accountNumber } = await req.json();
+    const { bankCode, bankName, accountNumber }: CreateBankAccountRequestData = await req.json();
     if (!bankCode || !bankName || !accountNumber) {
         return NextResponse.json({ error: 'Missing bankCode or bankName or accountNumber' }, { status: 400 });
     }
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest, { params }: { params: { userId: str
             bankName,
             accountNumber: newBankAccount.accountNumber,
             createdAt: newBankAccount.createdAt,
-        });
+        } as CreateBankAccountResponse);
     } catch (err) {
         return NextResponse.json({ error: `Failed to create bank account: ${err}` }, { status: 500 });
     }

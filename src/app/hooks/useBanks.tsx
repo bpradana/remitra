@@ -1,53 +1,41 @@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@account-kit/react";
-
-interface Bank {
-    bankCode: string;
-    bankName: string;
-    maxAmountTransfer: string;
-}
-
-interface BanksResponse {
-    statusCode: number;
-    message: string;
-    data?: Bank[];
-    error?: string;
-}
+import { BanksResponse } from "@/app/presentation/external/idrx/banks";
 
 export function useBanks(enabled: boolean = false) {
-    const user = useUser();
+  const user = useUser();
 
-    const {
-        data: banks,
-        isLoading,
-        error,
-        refetch,
-    } = useQuery<BanksResponse>({
-        queryKey: ["banks", user?.userId],
-        queryFn: async () => {
-            if (!user?.userId) {
-                throw new Error("User not authenticated");
-            }
+  const {
+    data: banks,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<BanksResponse>({
+    queryKey: ["banks", user?.userId],
+    queryFn: async () => {
+      if (!user?.userId) {
+        throw new Error("User not authenticated");
+      }
 
-            const res = await fetch(`/api/external/idrx/banks?userId=${user.userId}`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-            });
+      const res = await fetch(`/api/external/idrx/banks`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to fetch banks");
-            }
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to fetch banks");
+      }
 
-            return res.json();
-        },
-        enabled: enabled && !!user?.userId,
-    });
+      return res.json();
+    },
+    enabled: enabled && !!user?.userId,
+  });
 
-    return {
-        banks: banks?.data || [],
-        isLoading,
-        error: error?.message || banks?.error,
-        refetch,
-    };
+  return {
+    banks: banks?.data || [],
+    isLoading,
+    error: error?.message || banks?.error,
+    refetch,
+  };
 } 

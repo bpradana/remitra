@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { useUserData } from "@/app/hooks/useUserData";
-import { Dropzone, DropzoneContent } from "@/components/ui/dropzone";
 import ConfirmationDialog from "./confirmation-dialog";
 
 interface EditProfileDialogProps {
@@ -53,6 +52,7 @@ export default function EditProfileDialog({
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
 
   const { updateProfile } = useUserData();
+  const { callOnboarding } = useUserData();
 
   const {
     register,
@@ -122,6 +122,27 @@ export default function EditProfileDialog({
         identityNumber: data.identityNumber || undefined,
         identityFile: uploadedFile || tempFile || undefined,
       });
+
+      // Check if this is the first time setting all required fields
+      const isFirstTimeSetting =
+        !fullName && !physicalAddress && !identityNumber && !identityFile;
+      const hasRequiredFields =
+        data.fullName &&
+        data.physicalAddress &&
+        data.identityNumber &&
+        (uploadedFile || tempFile);
+
+      // If this is the first time setting all required fields, call onboarding API
+      if (isFirstTimeSetting && hasRequiredFields) {
+        try {
+          await callOnboarding();
+        } catch (onboardingError) {
+          console.error('Onboarding error:', onboardingError);
+          // Don't fail the entire operation if onboarding fails
+          // The user can still save their profile data
+        }
+      }
+
       setIsSuccess(true);
       // Clear temp file after successful submission
       setTempFile(null);
@@ -189,11 +210,6 @@ export default function EditProfileDialog({
     });
   };
 
-  const handleError = (error: Error) => {
-    console.error("Dropzone error:", error);
-    setError("Failed to upload file");
-  };
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -212,13 +228,13 @@ export default function EditProfileDialog({
                 !physicalAddress ||
                 !identityNumber ||
                 !identityFile) && (
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
-                  ⚠️ <strong>Important:</strong> Once you submit your email,
-                  full name, physical address, ID number, and ID file for the
-                  first time, these fields cannot be changed. Please ensure all
-                  information is accurate before submitting.
-                </div>
-              )}
+                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+                    ⚠️ <strong>Important:</strong> Once you submit your email,
+                    full name, physical address, ID number, and ID file for the
+                    first time, these fields cannot be changed. Please ensure all
+                    information is accurate before submitting.
+                  </div>
+                )}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -352,11 +368,10 @@ export default function EditProfileDialog({
               </Label>
               <div className="relative">
                 <label
-                  className={`block border-dashed border-2 rounded p-6 text-center cursor-pointer ${
-                    isLoading || (!!identityFile && !tempFile)
-                      ? "opacity-50 pointer-events-none"
-                      : "hover:border-primary"
-                  }`}
+                  className={`block border-dashed border-2 rounded p-6 text-center cursor-pointer ${isLoading || (!!identityFile && !tempFile)
+                    ? "opacity-50 pointer-events-none"
+                    : "hover:border-primary"
+                    }`}
                 >
                   <input
                     type="file"

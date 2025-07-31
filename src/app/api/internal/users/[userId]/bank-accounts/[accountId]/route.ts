@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { bankAccounts, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
+import { DeleteBankAccountResponse } from '@/app/presentation/internal/bank-accounts';
 
 export async function DELETE(req: NextRequest, { params }: { params: { userId: string; accountId: string } }) {
     const { userId, accountId } = params;
@@ -27,7 +28,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { userId: s
             return NextResponse.json({ error: 'Bank account not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true } as DeleteBankAccountResponse);
     } catch (err) {
         return NextResponse.json({ error: `Failed to delete bank account: ${err}` }, { status: 500 });
     }

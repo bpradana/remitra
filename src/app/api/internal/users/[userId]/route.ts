@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
+import { GetUserResponse, UpdateUserResponse, UpdateUserRequestData } from '@/app/presentation/internal/users';
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
     const { userId } = params;
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
             userName: user.userName,
             identityNumber: user.identityNumber,
             identityFile: user.identityFile,
-        });
+            isVerified: user.isVerified,
+        } as GetUserResponse);
     } catch (err) {
         return NextResponse.json({ error: `Failed to fetch user info: ${err}` }, { status: 500 });
     }
@@ -34,7 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { userId: st
         return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
-    const updateData = await req.json();
+    const updateData: UpdateUserRequestData = await req.json();
     const { userName, email, identityNumber, fullName, physicalAddress, identityFile } = updateData;
 
     // Build update object with only provided fields
@@ -53,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { userId: st
 
     try {
         db.update(users).set(updateFields).where(eq(users.userId, userId)).run();
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true } as UpdateUserResponse);
     } catch (err) {
         return NextResponse.json({ error: `Failed to update user info: ${err}` }, { status: 500 });
     }

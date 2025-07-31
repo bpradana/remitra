@@ -48,7 +48,10 @@ export default function UserInfo() {
         {loading ? (
           <Spinner />
         ) : (
-          <UsernameSection userName={userInfo?.userName} />
+          <UsernameSection
+            userName={userInfo?.userName}
+            isVerified={userInfo?.isVerified}
+          />
         )}
 
         {/* Wallet Address Section */}

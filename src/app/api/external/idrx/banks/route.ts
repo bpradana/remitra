@@ -1,62 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 import { createSignature } from '@/lib/signature';
+import { IDRXBanksResponse } from '@/app/presentation/external/idrx/banks';
 
-export async function GET(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const userId = searchParams.get('userId');
-
-        if (!userId) {
-            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-        }
-
-        // Get user's API credentials from database
-        const user = await db.select({
-            apiKey: users.apiKey,
-            apiSecret: users.apiSecret,
-        }).from(users).where(eq(users.userId, userId)).get();
-
-        if (!user || !user.apiKey || !user.apiSecret) {
-            return NextResponse.json({ error: 'User API credentials not found' }, { status: 404 });
-        }
-
-        // Prepare request to IDRX API
-        const method = 'GET';
-        const path = '/api/transaction/method';
-        const body = {};
-        const timestamp = Math.floor(Date.now() / 1000).toString();
-
-        // Generate signature
-        const signature = createSignature(method, path, body, timestamp, user.apiSecret);
-
-        // Make request to IDRX API
-        const baseUrl = process.env.IDRX_API_BASE_URL;
-        if (!baseUrl) {
-            return NextResponse.json({ error: 'IDRX API base URL is not set' }, { status: 500 });
-        }
-        const response = await fetch(`${baseUrl}/api/transaction/method`, {
-            method: method,
-            headers: {
-                'idrx-api-key': user.apiKey,
-                'idrx-api-sig': signature,
-                'idrx-api-ts': timestamp,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('IDRX API error:', errorText);
-            return NextResponse.json({ error: 'Failed to fetch banks from IDRX API' }, { status: response.status });
-        }
-        const data = await response.json();
-        return NextResponse.json(data);
-
-    } catch (error) {
-        console.error('Error fetching banks:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+export async function GET(req: NextRequest) {
+  try {
+    const apiKey = process.env.IDRX_API_KEY;
+    const apiSecret = process.env.IDRX_API_SECRET;
+    if (!apiKey || !apiSecret) {
+      return NextResponse.json({ error: 'IDRX API credentials not set' }, { status: 500 });
     }
+
+    // Prepare request to IDRX API
+    const baseUrl = process.env.IDRX_API_BASE_URL;
+    if (!baseUrl) {
+      return NextResponse.json({ error: 'IDRX API base URL is not set' }, { status: 500 });
+    }
+
+    const method = 'GET';
+    const path = `${baseUrl}/api/transaction/method`;
+    const body = {};
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+
+    // Generate signature
+    const signature = createSignature(method, path, body, timestamp, apiSecret);
+
+    // Make request to IDRX API
+    if (!baseUrl) {
+      return NextResponse.json({ error: 'IDRX API base URL is not set' }, { status: 500 });
+    }
+    const response = await fetch(path, {
+      method: method,
+      headers: {
+        'idrx-api-key': apiKey,
+        'idrx-api-sig': signature,
+        'idrx-api-ts': timestamp,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return NextResponse.json({ error: 'Failed to fetch banks from IDRX API' }, { status: response.status });
+    }
+    const data: IDRXBanksResponse = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 } 

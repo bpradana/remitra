@@ -1,11 +1,28 @@
-// Presentation Layer - API Request/Response Schemas
-// This folder contains all the TypeScript interfaces and types for API communication
+// Presentation Layer Index
+// Central export point for all presentation layer types and utilities
 
-// External IDRX API Schemas
-export * from './external/idrx';
+// Common types and utilities
+export * from './common';
+export {
+    createSuccessResponse,
+    createErrorResponse
+} from './utils';
+export type {
+    ApiRequest,
+    ApiRequestWithUserId,
+    ApiRequestWithId,
+    ApiResponse,
+    ApiResponseList,
+    PaginationParams,
+    PaginatedData,
+    PaginatedResponse
+} from './utils';
 
-// Internal API Schemas
-export * from './internal';
+// Internal API schemas
+export * from './internal/users';
+export * from './internal/bank-accounts';
 
-// Common/Shared Schemas
-export * from './common'; 
+// External API schemas
+export * from './external/idrx/banks';
+export * from './external/idrx/onboarding';
+export * from './external/idrx/transactions'; 

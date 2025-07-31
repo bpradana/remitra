@@ -1,20 +1,10 @@
 // IDRX Banks API Schemas
 // External API for fetching available banks
 
-import { BankInfo } from '../../common';
+import { BankInfo, BaseApiResponse } from '@/app/presentation/common';
 
-export interface IDRXBanksResponse {
-    statusCode: number;
-    message: string;
-    data: BankInfo[];
-}
-
-export interface BanksResponse {
-    statusCode: number;
-    message: string;
-    data?: BankInfo[];
-    error?: string;
-}
+// Use consistent base response pattern
+export type BanksResponse = BaseApiResponse<BankInfo[]>;
 
 // Request schemas (if any specific request parameters are needed)
 export interface GetBanksRequest {

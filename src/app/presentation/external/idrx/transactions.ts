@@ -1,50 +1,34 @@
 // IDRX Transactions API Schemas
 // External API for transaction operations (mint, fees, rates)
 
-import { TransactionData } from '../../common';
+import { TransactionData, BaseApiResponse } from '@/app/presentation/common';
 
-export interface IDRXMintResponse {
-    statusCode: number;
-    message: string;
-    data: TransactionData;
-}
+// Use consistent base response patterns
+export type MintResponse = BaseApiResponse<TransactionData>;
 
 export interface MintRequest {
-    // Add specific mint request parameters based on IDRX API documentation
-    // This is a placeholder - actual parameters should match IDRX API spec
     amount: string;
     merchantOrderId: string;
     reference: string;
-    // Add other required fields as needed
+    // Add other required fields as needed based on IDRX API documentation
 }
 
-export interface MintResponse {
-    statusCode: number;
-    message: string;
-    data?: TransactionData;
-    error?: string;
+// Fees API schemas
+export interface FeesData {
+    id: number;
+    name: string;
+    amount: number;
+    isActive: boolean;
+    deleted: boolean;
 }
 
-// Fees API schemas (for future implementation)
-export interface FeesRequest {
-    // Add specific fees request parameters
+export type FeesResponse = BaseApiResponse<FeesData[]>;
+
+// Rates API schemas
+export interface RatesData {
+    price: number;
+    buyAmount: number;
+    chainId: number;
 }
 
-export interface FeesResponse {
-    statusCode: number;
-    message: string;
-    data?: any;
-    error?: string;
-}
-
-// Rates API schemas (for future implementation)
-export interface RatesRequest {
-    // Add specific rates request parameters
-}
-
-export interface RatesResponse {
-    statusCode: number;
-    message: string;
-    data?: any;
-    error?: string;
-} 
+export type RatesResponse = BaseApiResponse<RatesData[]>; 

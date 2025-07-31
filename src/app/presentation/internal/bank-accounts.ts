@@ -4,24 +4,16 @@
 import {
     BankAccount,
     CreateBankAccountRequest,
-    ApiResponse,
-    ErrorResponse,
-    SuccessResponse
-} from '../common';
+    BaseApiResponse,
+    WithUserId
+} from '@/app/presentation/common';
 
-// GET /api/internal/users/[userId]/bank-accounts
-export interface GetBankAccountsResponse extends ApiResponse<BankAccount[]> { }
-
-// POST /api/internal/users/[userId]/bank-accounts
-export interface CreateBankAccountResponse extends ApiResponse<BankAccount> { }
-
-// DELETE /api/internal/users/[userId]/bank-accounts/[accountId]
-export interface DeleteBankAccountResponse extends SuccessResponse { }
+// API Response types using consistent base patterns
+export type GetBankAccountsResponse = BaseApiResponse<BankAccount[]>;
+export type CreateBankAccountResponse = BaseApiResponse<BankAccount>;
+export type DeleteBankAccountResponse = BaseApiResponse<{ success: boolean }>;
 
 // Request type aliases for clarity
-export type GetBankAccountsRequest = { userId: string };
+export type GetBankAccountsRequest = WithUserId;
 export type CreateBankAccountRequestData = CreateBankAccountRequest;
-export type DeleteBankAccountRequest = {
-    userId: string;
-    accountId: string;
-}; 
+export type DeleteBankAccountRequest = WithUserId<{ accountId: string }>; 

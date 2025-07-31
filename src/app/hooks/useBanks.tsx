@@ -27,7 +27,8 @@ export function useBanks(enabled: boolean = false) {
         throw new Error(errorData.error || "Failed to fetch banks");
       }
 
-      return res.json();
+      const response = await res.json();
+      return response; // Return the full response for type safety
     },
     enabled: enabled && !!user?.userId,
   });

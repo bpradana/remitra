@@ -3,7 +3,7 @@ import { createSignature } from "@/lib/signature";
 import { users } from "@/db/schema";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
-import { IDRXMintResponse } from "@/app/presentation/external/idrx/transactions";
+import { MintResponse } from "@/app/presentation/external/idrx/transactions";
 
 export async function POST(req: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, { params }: { params: { userId: str
       return NextResponse.json({ error: 'Failed to mint IDRX' }, { status: response.status });
     }
 
-    const data: IDRXMintResponse = await response.json();
+    const data: MintResponse = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: "Failed to mint IDRX" }, { status: 500 });

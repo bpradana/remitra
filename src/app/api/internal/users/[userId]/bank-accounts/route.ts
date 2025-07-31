@@ -3,16 +3,17 @@ import { bankAccounts, banks, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { GetBankAccountsResponse, CreateBankAccountResponse, CreateBankAccountRequestData } from '@/app/presentation/internal/bank-accounts';
+import { createSuccessResponse, createErrorResponse } from '@/app/presentation/utils';
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
     const { userId } = params;
     if (!userId) {
-        return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+        return NextResponse.json(createErrorResponse('Missing userId', 400), { status: 400 });
     }
     // Check if user exists
     const user = db.select().from(users).where(eq(users.userId, userId)).get();
     if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        return NextResponse.json(createErrorResponse('User not found', 404), { status: 404 });
     }
     try {
         const userBankAccounts = db
@@ -27,28 +28,28 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
             .where(eq(bankAccounts.userId, user.id))
             .all();
 
-        return NextResponse.json(userBankAccounts as GetBankAccountsResponse);
+        return NextResponse.json(createSuccessResponse(userBankAccounts));
     } catch (err) {
-        return NextResponse.json({ error: `Failed to fetch bank accounts: ${err}` }, { status: 500 });
+        return NextResponse.json(createErrorResponse(`Failed to fetch bank accounts: ${err}`, 500), { status: 500 });
     }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { userId: string } }) {
     const { userId } = params;
     if (!userId) {
-        return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+        return NextResponse.json(createErrorResponse('Missing userId', 400), { status: 400 });
     }
 
     const { bankCode, bankName, accountNumber }: CreateBankAccountRequestData = await req.json();
     if (!bankCode || !bankName || !accountNumber) {
-        return NextResponse.json({ error: 'Missing bankCode or bankName or accountNumber' }, { status: 400 });
+        return NextResponse.json(createErrorResponse('Missing bankCode or bankName or accountNumber', 400), { status: 400 });
     }
 
     try {
         // Check if user exists
         const user = db.select().from(users).where(eq(users.userId, userId)).get();
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json(createErrorResponse('User not found', 404), { status: 404 });
         }
 
         // First, get or create the bank
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: { userId: str
             .get();
 
         if (existingAccount) {
-            return NextResponse.json({ error: 'Bank account already exists' }, { status: 409 });
+            return NextResponse.json(createErrorResponse('Bank account already exists', 409), { status: 409 });
         }
 
         // Create the bank account
@@ -84,13 +85,14 @@ export async function POST(req: NextRequest, { params }: { params: { userId: str
             .returning()
             .get();
 
-        return NextResponse.json({
+        const bankAccountData = {
             id: newBankAccount.id,
             bankName,
             accountNumber: newBankAccount.accountNumber,
             createdAt: newBankAccount.createdAt,
-        } as CreateBankAccountResponse);
+        };
+        return NextResponse.json(createSuccessResponse(bankAccountData));
     } catch (err) {
-        return NextResponse.json({ error: `Failed to create bank account: ${err}` }, { status: 500 });
+        return NextResponse.json(createErrorResponse(`Failed to create bank account: ${err}`, 500), { status: 500 });
     }
 } 

@@ -1,18 +1,12 @@
 // Common/Shared Schemas
 // These are used across multiple API endpoints and hooks
 
-export interface ApiResponse<T = any> {
-    success?: boolean;
-    error?: string;
-    message?: string;
+// Base response types for consistent API responses
+export interface BaseApiResponse<T = any> {
+    statusCode: number;
+    message: string;
     data?: T;
-}
-
-export interface PaginatedResponse<T> {
-    data: T[];
-    total: number;
-    page: number;
-    limit: number;
+    error?: string;
 }
 
 export interface ErrorResponse {
@@ -90,4 +84,8 @@ export interface CreateBankAccountRequest {
     bankCode: string;
     bankName: string;
     accountNumber: string;
-} 
+}
+
+// Utility types for common patterns
+export type WithUserId<T = {}> = T & { userId: string };
+export type WithId<T = {}> = T & { id: string }; 

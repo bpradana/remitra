@@ -25,7 +25,8 @@ export function useUserData() {
         headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
-        return res.json();
+        const response = await res.json();
+        return response.data; // Extract data from presentation layer response
       } else {
         return null;
       }
@@ -43,8 +44,8 @@ export function useUserData() {
         headers: { "Content-Type": "application/json" },
       });
       if (res.ok) {
-        const data = await res.json();
-        setBankAccounts(data);
+        const response = await res.json();
+        setBankAccounts(response.data || []); // Extract data from presentation layer response
       } else {
         setBankAccounts([]);
       }

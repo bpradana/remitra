@@ -1,6 +1,8 @@
 // IDRX Onboarding API Schemas
 // External API for user onboarding process
 
+import { BaseApiResponse } from '@/app/presentation/common';
+
 export interface IDRXUserData {
     id: number;
     fullname: string;
@@ -9,11 +11,8 @@ export interface IDRXUserData {
     apiSecret: string;
 }
 
-export interface IDRXOnboardingResponse {
-    statusCode: number;
-    message: string;
-    data: IDRXUserData;
-}
+// Use consistent base response pattern
+export type OnboardingResponse = BaseApiResponse<IDRXUserData>;
 
 export interface OnboardingRequest {
     email: string;
@@ -21,11 +20,4 @@ export interface OnboardingRequest {
     address: string;
     idNumber: string;
     idFile: File | Blob;
-}
-
-export interface OnboardingResponse {
-    statusCode: number;
-    message: string;
-    data?: IDRXUserData;
-    error?: string;
 } 

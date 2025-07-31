@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSignature } from '@/lib/signature';
-import { IDRXBanksResponse } from '@/app/presentation/external/idrx/banks';
+import { BanksResponse } from '@/app/presentation/external/idrx/banks';
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     if (!response.ok) {
       return NextResponse.json({ error: 'Failed to fetch banks from IDRX API' }, { status: response.status });
     }
-    const data: IDRXBanksResponse = await response.json();
+    const data: BanksResponse = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

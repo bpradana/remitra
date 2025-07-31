@@ -2,7 +2,7 @@ import { db, users } from "@/db";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { createSignature } from "@/lib/signature";
-import { IDRXOnboardingResponse } from "@/app/presentation/external/idrx/onboarding";
+import { OnboardingResponse } from "@/app/presentation/external/idrx/onboarding";
 
 export async function POST(req: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -82,12 +82,12 @@ export async function POST(req: NextRequest, { params }: { params: { userId: str
       return NextResponse.json({ error: 'Failed to onboard user' }, { status: response.status });
     }
 
-    const data: IDRXOnboardingResponse = await response.json();
+    const data: OnboardingResponse = await response.json();
 
     // Update user with IDRX API credentials
     await db.update(users).set({
-      apiKey: data.data.apiKey,
-      apiSecret: data.data.apiSecret,
+      apiKey: data.data?.apiKey,
+      apiSecret: data.data?.apiSecret,
       isVerified: true,
     }).where(eq(users.userId, userId));
 

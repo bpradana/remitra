@@ -2,7 +2,7 @@ import { db } from '@/db';
 import { bankAccounts, banks, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
-import { GetBankAccountsResponse, CreateBankAccountResponse, CreateBankAccountRequestData } from '@/app/presentation/internal/bank-accounts';
+import { CreateBankAccountRequestData } from '@/app/presentation/internal/bank-accounts';
 import { createSuccessResponse, createErrorResponse } from '@/app/presentation/utils';
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {

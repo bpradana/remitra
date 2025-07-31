@@ -2,7 +2,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
-import { GetUserResponse, UpdateUserResponse, UpdateUserRequestData } from '@/app/presentation/internal/users';
+import { UpdateUserRequestData } from '@/app/presentation/internal/users';
 import { createSuccessResponse, createErrorResponse } from '@/app/presentation/utils';
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {

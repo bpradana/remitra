@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ChevronDown } from "lucide-react";
 import { useUserData } from "@/app/hooks/useUserData";
-import { POST } from "@/app/api/external/idrx/transactions/mint/route";
 
 export default function Deposit() {
   const {
@@ -36,6 +35,7 @@ export default function Deposit() {
   const [sendDropdownOpen, setSendDropdownOpen] = useState(false);
   const [amount, setAmount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [loadingChange, setLoadingChange] = useState<boolean>(false);
 
   const handleAmountChange = async (value: string) => {
@@ -51,10 +51,10 @@ export default function Deposit() {
       // Simulate async check (e.g., check max limit or call API)
       await new Promise((resolve) => setTimeout(resolve, 300)); // mock delay
 
-      // If valid
       setAmount(parsed);
     } catch (err: any) {
       setError(err.message || "Invalid amount");
+      setAmount(0);
     } finally {
       setLoadingChange(false);
     }
@@ -62,12 +62,15 @@ export default function Deposit() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
 
     if (!userInfo?.walletAddress || !amount) {
-      alert("Missing wallet address or amount");
+      console.log(userInfo, amount);
+      setError("Missing wallet address or amount");
       return;
     }
 
+    setSubmitting(true);
     const body = {
       toBeMinted: amount,
       destinationWalletAddress: userInfo.walletAddress,
@@ -76,19 +79,29 @@ export default function Deposit() {
       requestType: "idrx",
     };
 
-    // try {
-    //   const res = await POST(JSON.stringify(body));
+    try {
+      const res = await fetch("/api/external/idrx/transactions/mint", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    //   const data = await res.json();
+      const data = await res.json();
 
-    //   if (!res.ok) {
-    //     throw new Error(data.error || "Something went wrong");
-    //   }
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
 
-    //   console.log("Mint successful:", data);
-    // } catch (err) {
-    //   console.error("Mint request failed:", err);
-    // }
+      console.log("Mint successful:", data);
+      // TODO: handle success (e.g., refresh balance, show toast, etc.)
+    } catch (err: any) {
+      console.error("Mint request failed:", err);
+      setError(err.message || "Failed to mint");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -98,12 +111,10 @@ export default function Deposit() {
         <CardDescription>Deposit funds instantly.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-6">
-          {/* You send */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div>
             <div className="text-gray-500 mb-1">Amount deposit</div>
             <div className="flex items-center gap-4">
-              {/* Currency selector */}
               <div className="relative">
                 <button
                   className="flex items-center border rounded px-4 py-2"
@@ -132,11 +143,12 @@ export default function Deposit() {
                   </div>
                 )}
               </div>
-              {/* Amount */}
               <Input
                 type="number"
                 placeholder="Amount"
                 onChange={(e) => handleAmountChange(e.target.value)}
+                disabled={submitting}
+                aria-label="Deposit amount"
               />
             </div>
             <div className="text-sm text-gray-400 mt-1 w-full text-right">
@@ -145,11 +157,17 @@ export default function Deposit() {
                 1,000,000 {sendCurrency.code}
               </a>
             </div>
+            {error && <div className="text-sm text-red-500 mt-1">{error}</div>}
           </div>
 
-          {/* Continue button */}
-          <Button className="w-full mt-2">Continue</Button>
-        </div>
+          <Button
+            type="submit"
+            className="w-full mt-2"
+            disabled={submitting || loadingChange || !amount}
+          >
+            {submitting ? "Processing..." : "Continue"}
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );
